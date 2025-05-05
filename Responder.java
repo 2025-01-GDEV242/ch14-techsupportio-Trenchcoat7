@@ -61,6 +61,9 @@ public class Responder
         return pickDefaultResponse();
     }
 
+    /**
+     *  Populates the response hash map fillResponseMap to read from the file. responses.txt.
+     */
     private void fillResponseMap()
     {
         Charset charset = Charset.forName("US-ASCII");
