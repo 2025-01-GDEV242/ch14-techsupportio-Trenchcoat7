@@ -61,59 +61,52 @@ public class Responder
         return pickDefaultResponse();
     }
 
-    /**
-     * Enter all the known keywords and their associated responses
-     * into our response map.
-     */
     private void fillResponseMap()
     {
-        responseMap.put("crash", 
-                        "Well, it never crashes on our system. It must have something\n" +
-                        "to do with your system. Tell me more about your configuration.");
-        responseMap.put("crashes", 
-                        "Well, it never crashes on our system. It must have something\n" +
-                        "to do with your system. Tell me more about your configuration.");
-        responseMap.put("slow", 
-                        "I think this has to do with your hardware. Upgrading your processor\n" +
-                        "should solve all performance problems. Have you got a problem with\n" +
-                        "our software?");
-        responseMap.put("performance", 
-                        "Performance was quite adequate in all our tests. Are you running\n" +
-                        "any other processes in the background?");
-        responseMap.put("bug", 
-                        "Well, you know, all software has some bugs. But our software engineers\n" +
-                        "are working very hard to fix them. Can you describe the problem a bit\n" +
-                        "further?");
-        responseMap.put("buggy", 
-                        "Well, you know, all software has some bugs. But our software engineers\n" +
-                        "are working very hard to fix them. Can you describe the problem a bit\n" +
-                        "further?");
-        responseMap.put("windows", 
-                        "This is a known bug to do with the Windows operating system. Please\n" +
-                        "report it to Microsoft. There is nothing we can do about this.");
-        responseMap.put("macintosh", 
-                        "This is a known bug to do with the Mac operating system. Please\n" +
-                        "report it to Apple. There is nothing we can do about this.");
-        responseMap.put("expensive", 
-                        "The cost of our product is quite competitive. Have you looked around\n" +
-                        "and really compared our features?");
-        responseMap.put("installation", 
-                        "The installation is really quite straight forward. We have tons of\n" +
-                        "wizards that do all the work for you. Have you read the installation\n" +
-                        "instructions?");
-        responseMap.put("memory", 
-                        "If you read the system requirements carefully, you will see that the\n" +
-                        "specified memory requirements are 1.5 giga byte. You really should\n" +
-                        "upgrade your memory. Anything else you want to know?");
-        responseMap.put("linux", 
-                        "We take Linux support very seriously. But there are some problems.\n" +
-                        "Most have to do with incompatible glibc versions. Can you be a bit\n" +
-                        "more precise?");
-        responseMap.put("bluej", 
-                        "Ahhh, BlueJ, yes. We tried to buy out those guys long ago, but\n" +
-                        "they simply won't sell... Stubborn people they are. Nothing we can\n" +
-                        "do about it, I'm afraid.");
+        Charset charset = Charset.forName("US-ASCII");
+        Path path = Paths.get("responses.txt");
+
+        try (BufferedReader reader = Files.newBufferedReader(path, charset)) {
+            String line;
+            String[] keys = null;
+            StringBuilder responseBuilder = new StringBuilder();
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+
+                if (line.isEmpty()) {
+                    // End of current response block, map keys to response
+                    if (keys != null && responseBuilder.length() > 0) {
+                        String response = responseBuilder.toString().trim();
+                        for (String key : keys) {
+                            responseMap.put(key.toLowerCase(), response);
+                        }
+                    }
+                    // Reset for next entry
+                    keys = null;
+                    responseBuilder.setLength(0);
+                }
+                else if (keys == null) {
+                    keys = line.split("\\s*,\\s*"); // split comma-separated keywords
+                }
+                else {
+                    responseBuilder.append(line).append(" ");
+                }
+            }
+
+            // Handle case where file doesn't end with blank line
+            if (keys != null && responseBuilder.length() > 0) {
+                String response = responseBuilder.toString().trim();
+                for (String key : keys) {
+                    responseMap.put(key.toLowerCase(), response);
+                }
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error reading responses.txt: " + e.getMessage());
+        }
     }
+
 
     /**
      * Build up a list of default responses from which we can pick
